@@ -1,0 +1,84 @@
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: mycrm:latest
+  restart: unless-stopped
+  volumes:
+    - ./.env:/var/www/html/.env
+    - storage_data:/var/www/html/storage
+
+services:
+  app:
+    <<: *app
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      CONTAINER_ROLE: app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  queue:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "--verbose", "--tries=3", "--sleep=3", "--max-time=3600"]
+    environment:
+      CONTAINER_ROLE: queue
+    depends_on:
+      app:
+        condition: service_healthy
+
+  scheduler:
+    <<: *app
+    command: ["sh", "-c", "while true; do php artisan schedule:run --no-interaction; sleep 60; done"]
+    environment:
+      CONTAINER_ROLE: scheduler
+    depends_on:
+      app:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-mycrm}
+      MYSQL_USER: ${DB_USERNAME:-mycrm}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootsecret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+
+volumes:
+  mysql_data:
+  redis_data:
+  storage_data:
