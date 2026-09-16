@@ -1,0 +1,13 @@
+# Set DOMAIN in .env to your real domain (e.g. crm.example.com) to get
+# automatic HTTPS via Let's Encrypt. Leave it empty and Caddy just serves
+# plain HTTP on port 80.
+{$DOMAIN:80} {
+	encode gzip
+
+	reverse_proxy app:80
+
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+	}
+}

@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Trust the reverse proxy in front of this app (e.g. the Caddy
+        // service in docker-compose.yml) so requests are correctly detected
+        // as HTTPS and url()/asset() generate the right scheme.
+        $middleware->trustProxies(at: '*');
+
         $middleware->append(CanInstall::class);
 
         $middleware->encryptCookies(except: [
