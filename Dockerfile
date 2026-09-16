@@ -30,6 +30,7 @@ RUN apk add --no-cache \
         icu-libs \
         libxml2 \
         oniguruma \
+        unzip \
     && apk add --no-cache --virtual .build-deps \
         $PHPIZE_DEPS \
         freetype-dev \
@@ -58,6 +59,9 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+ENV COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_MEMORY_LIMIT=-1
 
 WORKDIR /var/www/html
 

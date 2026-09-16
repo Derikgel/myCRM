@@ -16,8 +16,8 @@ wait_for_db() {
     # process below and make Laravel's immutable Dotenv loader skip re-reading
     # these values later if the .env file changes.
     local db_host db_port
-    db_host=$(grep -E '^DB_HOST=' .env | tail -n1 | cut -d '=' -f2-)
-    db_port=$(grep -E '^DB_PORT=' .env | tail -n1 | cut -d '=' -f2-)
+    db_host=$(grep -E '^DB_HOST=' .env | tail -n1 | cut -d '=' -f2- | tr -d '\r')
+    db_port=$(grep -E '^DB_PORT=' .env | tail -n1 | cut -d '=' -f2- | tr -d '\r')
     db_port=${db_port:-3306}
 
     if [ -z "$db_host" ]; then
@@ -41,7 +41,7 @@ wait_for_db() {
 wait_for_db
 
 if [ "$ROLE" = "app" ]; then
-    if grep -qE '^APP_KEY=\s*$' .env; then
+    if grep -qE '^APP_KEY=[[:space:]]*$' .env; then
         echo "[entrypoint] Generating application key..."
         php artisan key:generate --force --no-interaction
     fi
@@ -51,9 +51,11 @@ if [ "$ROLE" = "app" ]; then
     echo "[entrypoint] Running database migrations..."
     php artisan migrate --force --no-interaction
 
+    # Not route:cache: routes/api.php has a closure-based route (the default
+    # Sanctum /user endpoint), and Laravel cannot serialize Closures into the
+    # route cache -- `route:cache` would throw and crash the container.
     php artisan config:cache
-    php artisan route:cache
-    php artisan view:cache
+    php artisan view:cache || true
 fi
 
 exec "$@"

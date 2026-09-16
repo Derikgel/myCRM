@@ -36,7 +36,8 @@ On first boot the `app` container automatically:
 - generates `APP_KEY` if it's still empty,
 - runs `php artisan storage:link`,
 - runs `php artisan migrate --force`,
-- caches config/routes/views.
+- caches config and views (not routes: `routes/api.php` has a closure-based
+  route, which Laravel's route cache cannot serialize).
 
 The `queue` and `scheduler` containers wait for `app` to report healthy
 before starting.
@@ -80,6 +81,6 @@ docker compose down -v       # stop and wipe database/redis/storage volumes
   `scheduler`, so uploaded files and logs survive container recreation.
 - Front-end assets (`public/build`) are compiled at image build time — rerun
   `docker compose up -d --build` after changing anything under `resources/`.
-- The image caches config/routes/views on every `app` container start, which
+- The image caches config/views on every `app` container start, which
   assumes `APP_ENV=production`. If you need to iterate quickly, set
   `APP_ENV=local` and drop the `*:cache` lines from `docker/entrypoint.sh`.
