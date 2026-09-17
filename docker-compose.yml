@@ -96,7 +96,10 @@ services:
     image: mailhog/mailhog
     restart: unless-stopped
     ports:
-      - "8025:8025"
+      # Bound to localhost only -- not reachable from the internet. View it
+      # via an SSH tunnel: ssh -L 8025:localhost:8025 <user>@<server>, then
+      # open http://localhost:8025 on your own machine.
+      - "127.0.0.1:8025:8025"
 
 volumes:
   mysql_data:

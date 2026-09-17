@@ -85,7 +85,7 @@ Without `DOMAIN` set, Caddy just serves plain HTTP on port 80.
 | `scheduler` | Runs `php artisan schedule:run` every minute — drives `inbound-emails:process` |
 | `mysql`     | MySQL 8.0, data persisted in the `mysql_data` volume    |
 | `redis`     | Cache / session / queue backend                        |
-| `mailhog`   | Catches outgoing mail in dev — UI on `http://localhost:8025` |
+| `mailhog`   | Catches outgoing mail in dev — UI on `http://localhost:8025`, bound to localhost only (not internet-facing); tunnel with `ssh -L 8025:localhost:8025 <user>@<server>` to view it remotely |
 
 ## Useful commands
 
