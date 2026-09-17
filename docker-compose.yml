@@ -16,7 +16,11 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      DOMAIN: ${DOMAIN:-}
+      # Caddy's own {$DOMAIN:80} Caddyfile fallback only applies when the
+      # variable is entirely unset, not when it's set-but-empty -- and
+      # `environment:` always sets it. So resolve the empty case here,
+      # where compose's ${VAR:-default} does treat empty as unset.
+      DOMAIN: ${DOMAIN:-:80}
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
